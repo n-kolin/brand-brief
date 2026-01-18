@@ -19,3 +19,9 @@ export type QuestionType = {
     defaultAnswer?: string | number | Date;
     options?: { key: string, value: string, description?: string, default?: boolean }[];
 }
+
+export type QuestionnaireType = {
+    id: string;
+    title: string;
+    questions: QuestionType[];
+}
