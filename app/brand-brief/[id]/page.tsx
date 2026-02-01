@@ -7,34 +7,55 @@ import { parse } from 'path';
 import allQuestions from '@/app/config/questions.config';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { Sections } from '@/app/config/sections.config';
+import { generateQuestions } from '@/app/api/gemini/route';
+import { useQuestions } from '@/app/context/QuestionContext';
 
 export default function page() {
 
   const router = useRouter();
-  const params = useParams();
-  const sectionId = params?.id;
-  const sectionKeys = Object.keys(Sections);
-  const currentSectionIndex = sectionKeys.findIndex(key => Sections[key as keyof typeof Sections].id === sectionId);
-  if(currentSectionIndex === -1){
+  const { questions, sectionId, currentSectionIndex, nextSectionId, prevSectionId, addQuestions, updateAnswer } = useQuestions();
+  if (currentSectionIndex === -1) {
     notFound();
-    return null;
   }
-  const currentQuestions = allQuestions.find(sec => sec.id === sectionId);
 
-  const initialQuestions = currentQuestions?.questions;
-  const [questions, setQuestions] = useState<QuestionType[]>(initialQuestions || []);
 
-  const handleAnswer = (answer: AnswerType, index: number) => {
-    const updatedQuestions = [...questions];
 
-    updatedQuestions[index] = {
-      ...updatedQuestions[index],
-      answer
+  // const handleAnswer = async (answer: AnswerType, index: number) => {
+  //   const updatedQuestions = [...questions];
+
+  //   updatedQuestions[index] = {
+  //     ...updatedQuestions[index],
+  //     answer
+  //   }
+  //   setQuestions(updatedQuestions);
+  //   if(index === questions.length - 1){
+  //     const newQuestions = await generateQuestions();
+  //     addQuestions(newQuestions);
+
+  //   }
+  //   setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, questions.length - 1));
+  // }
+  // const addQuestions = (newQuestions: QuestionType[]) => {
+  //   setQuestions((prevQuestions) => [...prevQuestions, ...newQuestions]);
+  // }
+
+  const handleAnswer = (answer: AnswerType) => {
+    updateAnswer(questions[currentIndex].id, answer);
+    // Add new question with AI 
+    // if(currentIndex === questions.length - 1){
+    //   //generate new questions and add
+    //   generateQuestions().then(newQuestions => {
+    //     addQuestions(newQuestions);
+    //   });
+    // }
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex((prevIndex) => prevIndex + 1);
     }
-    setQuestions(updatedQuestions);
-    setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, questions.length - 1));
-  }
+    else {
+      handleNextSection();
+    }
 
+  }
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
   const getInitialValue = () => {
@@ -59,23 +80,21 @@ export default function page() {
   }
 
   const handleNextSection = () => {
-    if(currentSectionIndex + 1 < allQuestions.length){
-      const nextSectionId = Sections[sectionKeys[currentSectionIndex + 1] as keyof typeof Sections].id;
+    if (nextSectionId) {
       router.push(`/brand-brief/${nextSectionId}`);
     }
   }
   const handlePrevSection = () => {
-    if(currentSectionIndex > 0){
-      const prevSectionId = Sections[sectionKeys[currentSectionIndex - 1] as keyof typeof Sections].id;
+    if (prevSectionId) {
       router.push(`/brand-brief/${prevSectionId}`);
     }
   }
 
-  
+
   return (
     <div>
       <h1>Section {sectionId}</h1>
-      <h2>{currentQuestions?.title}</h2>
+      {/* <h2>{currentQuestions?.title}</h2> */}
       <div>
         {
           questions.slice(0, currentIndex).map((q, idx) => (
@@ -86,7 +105,7 @@ export default function page() {
           question={questions[currentIndex]}
           initialValue={getInitialValue()}
           onAnswer={(answer: AnswerType) =>
-            handleAnswer(answer, currentIndex)
+            handleAnswer(answer)
           }
         />
         <h2>
@@ -95,8 +114,8 @@ export default function page() {
       </div>
 
       <div>
-        <button onClick={handlePrevSection} disabled={currentSectionIndex === 0}>Previous Section</button>
-        <button onClick={handleNextSection} disabled={currentSectionIndex + 1 >= allQuestions.length}>Next Section</button>
+        <button onClick={handlePrevSection} disabled={prevSectionId === null}>Previous Section</button>
+        <button onClick={handleNextSection} disabled={nextSectionId === null}>Next Section</button>
       </div>
     </div>
   )

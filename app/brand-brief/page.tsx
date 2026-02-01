@@ -9,7 +9,7 @@ export default function page() {
 
     const router = useRouter();
     const startQuestions = () =>{
-        const firstSectionId = Sections.BASE_QUESTIONS.id;
+        const firstSectionId = Sections[0].id;
         router.push(`/brand-brief/${firstSectionId}`);
     }
 

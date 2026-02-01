@@ -5,8 +5,8 @@ import { Sections } from "./sections.config";
 
 const allQuestions: QuestionnaireType[] = [
     {
-        id: Sections.BASE_QUESTIONS.id,
-        title: Sections.BASE_QUESTIONS.title,
+        id: Sections[0].id,
+        title: Sections[0].title,
         questions: [{
             type: 'TEXT',
             id: 'q1',
@@ -66,8 +66,8 @@ const allQuestions: QuestionnaireType[] = [
         },]
     },
     {
-        id: Sections.SECOND_QUESTIONS.id,
-        title: Sections.SECOND_QUESTIONS.title,
+        id: Sections[1].id,
+        title: Sections[1].title,
         questions: [{
             type: 'TEXT',
             id: 'q1',
