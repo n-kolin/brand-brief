@@ -2,10 +2,42 @@ import { QuestionType } from "@/app/types/question.type";
 
 
 export function buildQuestionsPrompt(sectionTitle: string, answeredQuestions: QuestionType[]): string {
-    const questionsContext = buildQandAPrompt(answeredQuestions);
+    const questionsContext = answeredQuestions.map(q =>
+        `Q: ${q.question}\nA: ${q.answer || q.defaultAnswer || 'N/A'}`
+    ).join('\n\n');
+    
     return `You are an AI assistant that generates questions for a brand brief questionnaire.
-Given the section "${sectionTitle}", generate 3 relevant and concise questions that help gather information for this section.
-Here are the previously answered questions for context: ${questionsContext}`;
+Given the section "${sectionTitle}", analyze the conversation so far and decide if more questions are needed.
+
+Previous Q&A pairs:
+${questionsContext}
+
+If you think we have enough information for this section, return:
+{
+  "shouldContinue": false,
+  "reason": "Brief explanation why no more questions needed",
+  "questions": []
+}
+
+If more questions would be helpful (maximum 3), return:
+{
+  "shouldContinue": true,
+  "questions": [
+    {
+      "type": "TEXT",
+      "id": "ai_q_${Date.now()}_1",
+      "question": "Your question here?",
+      "answer": "",
+      "defaultAnswer": ""
+    }
+  ]
+}
+
+Valid question types: TEXT, RADIO, CHECKBOX, DROPDOWN, NUMBER, DATE
+For RADIO, CHECKBOX, DROPDOWN - include "options" array with key and value.
+Generate unique IDs using timestamp: "ai_q_${Date.now()}_1", "ai_q_${Date.now()}_2", etc.
+
+Return ONLY valid JSON, no markdown, no extra text.`;
 }
 
 export function buildImagePrompt(allAnswers: Record<string, QuestionType[]>): string {

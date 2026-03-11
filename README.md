@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Logo Generator - מחולל לוגו מבוסס בינה מלאכותית
 
-## Getting Started
+פרויקט ליצירת לוגואים מותאמים אישית באמצעות בינה מלאכותית, המבוסס על שאלון דינמי ואינטראקטיבי.
 
-First, run the development server:
+## 📋 תיאור הפרויקט
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+מערכת ליצירת לוגואים המותאמים אישית לצרכי המשתמש באמצעות תהליך שאלון חכם:
+
+- **שאלון דינמי**: המשתמש עובר שאלון בנושאים שונים, כאשר השאלות מתפתחות באופן דינמי על פי התשובות
+- **שאלות בסיס + AI**: חלק מהשאלות מוגדרות מראש, ושאלות נוספות נוצרות בזמן אמת על ידי AI
+- **יצירת לוגו מותאם**: בסיום התהליך, המערכת יוצרת לוגו המותאם לצרכים שהוגדרו
+
+## 🏗️ מבנה הפרויקט
+
+```
+branding-project/
+├── app/
+│   ├── api/
+│   │   └── gemini/              # API endpoints לעבודה עם Gemini AI
+│   │       ├── generate-image/  # יצירת תמונות לוגו
+│   │       └── generate-questions/ # יצירת שאלות דינמיות
+│   ├── brand-brief/             # דפי השאלון
+│   │   ├── components/          # קומפוננטות השאלון
+│   │   │   ├── QuestionCard.tsx
+│   │   │   ├── HistoryQuestionCard.tsx
+│   │   │   └── question-types/  # סוגי שאלות שונים
+│   │   └── [id]/               # דפים דינמיים לפי נושא
+│   ├── config/
+│   │   ├── questions.config.ts  # הגדרות שאלות בסיס
+│   │   └── sections.config.ts   # הגדרות נושאים
+│   ├── context/
+│   │   └── QuestionContext.tsx  # ניהול state של השאלון
+│   ├── lib/
+│   │   └── ai/                  # לוגיקת AI
+│   └── types/
+│       └── question.type.ts     # טיפוסים של שאלות
+└── public/                      # קבצים סטטיים
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 טכנולוגיות
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Next.js 16** - פריימוורק React
+- **TypeScript** - שפת תכנות מוקלדת
+- **Google Gemini AI** - מודל AI ליצירת שאלות ותמונות
+- **Tailwind CSS** - עיצוב
+- **React 19** - ספריית UI
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 התקנה והרצה
 
-## Learn More
+### דרישות מקדימות
+- Node.js (גרסה 20 ומעלה)
+- npm או yarn
 
-To learn more about Next.js, take a look at the following resources:
+### שלבי התקנה
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. שכפול הפרויקט:
+```bash
+git clone <repository-url>
+cd branding-project
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. התקנת תלויות:
+```bash
+npm install
+```
 
-## Deploy on Vercel
+3. הגדרת משתני סביבה:
+צור קובץ `.env.local` והוסף:
+```env
+GOOGLE_API_KEY=your_gemini_api_key_here
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. הרצת שרת פיתוח:
+```bash
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. פתח בדפדפן: [http://localhost:3000](http://localhost:3000)
+
+## 🎯 תהליך השאלון
+
+1. **נושאים**: השאלון מחולק למספר נושאים (Sections)
+2. **שאלות בסיס**: כל נושא מתחיל עם שאלות בסיס מוגדרות מראש
+3. **שאלות דינמיות**: על פי התשובות, ה-AI יוצר שאלות המשך רלוונטיות
+4. **סוגי שאלות נתמכים**:
+   - טקסט חופשי (TEXT)
+   - בחירה מרובה (CHECKBOX)
+   - בחירה יחידה (RADIO)
+   - תפריט נפתח (DROPDOWN)
+   - תאריך (DATE)
+   - מספר (NUMBER)
+
+## 📝 סקריפטים זמינים
+
+```bash
+npm run dev      # הרצת שרת פיתוח
+npm run build    # בניית הפרויקט לפרודקשן
+npm run start    # הרצת שרת פרודקשן
+npm run lint     # בדיקת קוד
+```
+
+## 🔄 סטטוס פיתוח
+
+הפרויקט נמצא בשלבי פיתוח מוקדמים. תכונות שכבר מיושמות:
+- ✅ מבנה בסיסי של שאלון דינמי
+- ✅ אינטגרציה עם Gemini AI
+- ✅ סוגי שאלות מגוונים
+- ✅ ניווט בין נושאים
+- ✅ יצירת שאלות דינמיות עם Pre-generation (חדש!)
+- 🚧 יצירת לוגו (בפיתוח)
+- 🚧 שמירת תשובות (בפיתוח)
+
+## 📚 מסמכים נוספים
+
+- [CONTEXT.md](./CONTEXT.md) - מידע טכני מפורט על ניהול השאלות הדינמיות
+- [IMPLEMENTATION_NOTES.md](./IMPLEMENTATION_NOTES.md) - הערות מימוש על יצירת שאלות דינמיות עם Pre-generation
+- [CHANGELOG.md](./CHANGELOG.md) - רשימת שינויים ועדכונים בפרויקט
+
+## 🤝 תרומה
+
+הפרויקט נמצא בפיתוח פעיל. עדכונים ושיפורים יתווספו בהמשך.
+
+---
+
+**הערה**: README זה ייעדכן ככל שהפרויקט יתפתח ותכונות נוספות יתווספו.

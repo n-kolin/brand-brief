@@ -17,16 +17,15 @@ export async function GET(request: NextRequest, context: {params: {}}){
 }
 
 
-export async function generateQuestions(): Promise<QuestionType[]> {
+export async function generateQuestions(answeredQuestions: any[]): Promise<QuestionType[]> {
     try {
-      // שליחת בקשה ל-AI ליצירת שאלות
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: `Generate follow-up questions based on these answers: ${JSON.stringify(answers)}`,
+        contents: `Generate follow-up questions based on these answers: ${JSON.stringify(answeredQuestions)}`,
       });
   
-      // נניח שה-AI מחזיר רשימה של שאלות בפורמט JSON
-      const generatedQuestions: QuestionType[] = JSON.parse(response.text);
+      const text = response.text || '{}';
+      const generatedQuestions: QuestionType[] = JSON.parse(text);
   
       return generatedQuestions;
     } catch (error) {

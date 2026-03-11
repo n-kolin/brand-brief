@@ -1,62 +1,88 @@
 'use client'
 import { AnswerType, QuestionType } from '@/app/types/question.type';
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import HistoryQuestionCard from '../components/HistoryQuestionCard';
 import QuestionCard from '../components/QuestionCard';
-import { parse } from 'path';
-import allQuestions from '@/app/config/questions.config';
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { Sections } from '@/app/config/sections.config';
-import { generateQuestions } from '@/app/api/gemini/route';
 import { useQuestions } from '@/app/context/QuestionContext';
+import { generateQuestions } from '@/app/lib/api';
+
+const MAX_AI_GENERATION_ROUNDS = 3; // מקסימום 3 סבבים של יצירת שאלות
 
 export default function page() {
 
   const router = useRouter();
   const { questions, sectionId, currentSectionIndex, nextSectionId, prevSectionId, addQuestions, updateAnswer } = useQuestions();
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [aiStoppedMessage, setAiStoppedMessage] = useState<string | null>(null);
+  const isGeneratingRef = useRef<boolean>(false);
+  const generationRoundsRef = useRef<number>(0);
+
   if (currentSectionIndex === -1) {
     notFound();
   }
 
+  const generateQuestionsInBackground = async () => {
+    if (isGeneratingRef.current) return;
+    
+    // בדיקת הגבלת סבבים
+    if (generationRoundsRef.current >= MAX_AI_GENERATION_ROUNDS) {
+      console.log('Reached maximum AI generation rounds');
+      return;
+    }
+    
+    isGeneratingRef.current = true;
+    setIsGenerating(true);
+    
+    try {
+      const answeredQuestions = questions.filter(q => q.answer);
+      const sectionTitle = Sections[currentSectionIndex]?.title || sectionId;
+      
+      const data = await generateQuestions(sectionTitle, answeredQuestions);
+      
+      if (!data.success) {
+        console.error('Failed to generate questions');
+        alert('שגיאה ביצירת שאלות. בדוק את ה-console לפרטים.');
+        return;
+      }
+      
+      // בדיקה אם ה-AI אמר להפסיק
+      if (data.questions?.shouldContinue === false) {
+        console.log('AI decided to stop:', data.questions?.reason);
+        setAiStoppedMessage(data.questions?.reason || 'יש מספיק מידע לנושא זה');
+        return;
+      }
+      
+      // הוספת שאלות חדשות
+      if (data.questions?.questions && data.questions.questions.length > 0) {
+        addQuestions(data.questions.questions);
+        generationRoundsRef.current += 1;
+      }
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      alert(`שגיאה ביצירת שאלות: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGenerating(false);
+      isGeneratingRef.current = false;
+    }
+  }
 
-
-  // const handleAnswer = async (answer: AnswerType, index: number) => {
-  //   const updatedQuestions = [...questions];
-
-  //   updatedQuestions[index] = {
-  //     ...updatedQuestions[index],
-  //     answer
-  //   }
-  //   setQuestions(updatedQuestions);
-  //   if(index === questions.length - 1){
-  //     const newQuestions = await generateQuestions();
-  //     addQuestions(newQuestions);
-
-  //   }
-  //   setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, questions.length - 1));
-  // }
-  // const addQuestions = (newQuestions: QuestionType[]) => {
-  //   setQuestions((prevQuestions) => [...prevQuestions, ...newQuestions]);
-  // }
-
-  const handleAnswer = (answer: AnswerType) => {
+  const handleAnswer = async (answer: AnswerType) => {
     updateAnswer(questions[currentIndex].id, answer);
-    // Add new question with AI 
-    // if(currentIndex === questions.length - 1){
-    //   //generate new questions and add
-    //   generateQuestions().then(newQuestions => {
-    //     addQuestions(newQuestions);
-    //   });
-    // }
+    
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prevIndex) => prevIndex + 1);
-    }
-    else {
+    } else {
       handleNextSection();
     }
-
+    
+    const questionsLeft = questions.length - currentIndex - 1;
+    if (questionsLeft <= 2 && !isGeneratingRef.current) {
+      generateQuestionsInBackground();
+    }
   }
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
 
   const getInitialValue = () => {
     console.log('Getting initial value for question index:', questions);
@@ -94,7 +120,16 @@ export default function page() {
   return (
     <div>
       <h1>Section {sectionId}</h1>
-      {/* <h2>{currentQuestions?.title}</h2> */}
+      {isGenerating && (
+        <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
+          🤖 מכין שאלות נוספות...
+        </div>
+      )}
+      {aiStoppedMessage && (
+        <div style={{ fontSize: '14px', color: '#28a745', marginBottom: '10px', padding: '10px', backgroundColor: '#d4edda', borderRadius: '5px' }}>
+          ✅ {aiStoppedMessage}
+        </div>
+      )}
       <div>
         {
           questions.slice(0, currentIndex).map((q, idx) => (
