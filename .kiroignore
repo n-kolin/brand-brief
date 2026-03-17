@@ -1,0 +1,9 @@
+# Environment files with secrets
+.env
+.env.local
+.env*.local
+
+# API keys and secrets
+**/secrets/
+**/*.key
+**/*.pem
