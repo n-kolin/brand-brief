@@ -1,28 +1,20 @@
 'use client'
-import React, { useState } from 'react'
-import QuestionCard from './components/QuestionCard'
-import { AnswerType, QuestionType } from '../types/question.type'
-import HistoryQuestionCard from './components/HistoryQuestionCard'
-import { useRouter } from 'next/navigation'
-import { Sections } from '../config/sections.config'
-export default function page() {
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { createProject } from '../lib/api';
 
+export default function BrandBriefPage() {
     const router = useRouter();
-    const startQuestions = () =>{
-        const firstSectionId = Sections[0].id;
-        router.push(`/brand-brief/${firstSectionId}`);
-    }
+
+    const handleStart = async () => {
+        const projectId = await createProject();
+        router.push(`/brand-brief/${projectId}`);
+    };
 
     return (
         <div>
-            <h1>Brand Brief Page</h1>
-            <p>
-                This is the brand brief page.
-            </p>
-            <button onClick={startQuestions}>start now</button>
+            <h1>Brand Brief</h1>
+            <button onClick={handleStart}>Start</button>
         </div>
-    )
+    );
 }
-
-
-

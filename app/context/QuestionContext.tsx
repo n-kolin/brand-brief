@@ -2,55 +2,106 @@
 import React, { createContext, FC, ReactNode, useContext, useState } from "react";
 import { AnswerType, QuestionType } from "../types/question.type";
 import { Sections } from "../config/sections.config";
+import allQuestions from "../config/questions.config";
+
+export type SectionState = {
+    sectionId: string;
+    title: string;
+    questions: QuestionType[];
+    completed: boolean;
+}
 
 interface QuestionContextType {
-    sectionId: string;
-    questions: QuestionType[];
+    projectId: string;
+    sections: SectionState[];
     currentSectionIndex: number;
-    nextSectionId: string | null;
-    prevSectionId: string | null;
+    currentSection: SectionState;
     addQuestions: (newQuestions: QuestionType[]) => void;
-    updateAnswer: (questionId: string, answer: any) => void;
+    updateAnswer: (questionId: string, answer: AnswerType) => void;
+    completeSection: () => void;
+    goToPrevSection: () => void;
 }
 
 const QuestionContext = createContext<QuestionContextType | undefined>(undefined);
 
+type SavedSection = {
+    section_key: string;
+    questions: QuestionType[];
+};
+
 interface QuestionProviderProps {
     children: ReactNode;
-    sectionId: string;
-    baseQuestions: QuestionType[];
+    projectId: string;
+    savedSections?: SavedSection[];
 }
-export const QuestionProvider: FC<QuestionProviderProps> = ({ children, sectionId, baseQuestions }) => {
-    const [questions, setQuestions] = useState<QuestionType[]>(baseQuestions);
+
+function buildInitialSections(savedSections?: SavedSection[]): SectionState[] {
+    return Sections.map((section) => {
+        const saved = savedSections?.find(s => s.section_key === section.id);
+        return {
+            sectionId: section.id,
+            title: section.title,
+            questions: saved?.questions ?? allQuestions.find(q => q.id === section.id)?.questions ?? [],
+            completed: !!saved,
+        };
+    });
+}
+
+function getResumeIndex(sections: SectionState[]): number {
+    const firstIncomplete = sections.findIndex(s => !s.completed);
+    return firstIncomplete === -1 ? sections.length - 1 : firstIncomplete;
+}
+
+export const QuestionProvider: FC<QuestionProviderProps> = ({ children, projectId, savedSections }) => {
+    const [sections, setSections] = useState<SectionState[]>(() => buildInitialSections(savedSections));
+    const [currentSectionIndex, setCurrentSectionIndex] = useState(() =>
+        getResumeIndex(buildInitialSections(savedSections))
+    );
+
+    const currentSection = sections[currentSectionIndex];
 
     const addQuestions = (newQuestions: QuestionType[]) => {
-        setQuestions((prevQuestions) => [...prevQuestions, ...newQuestions]);
+        setSections(prev => prev.map((s, i) =>
+            i === currentSectionIndex
+                ? { ...s, questions: [...s.questions, ...newQuestions] }
+                : s
+        ));
     };
 
     const updateAnswer = (questionId: string, answer: AnswerType) => {
-        setQuestions((prevQuestions) =>
-            prevQuestions.map((q) =>
-                q.id === questionId ? { ...q, answer } : q
-            )
-        );
+        setSections(prev => prev.map((s, i) =>
+            i === currentSectionIndex
+                ? { ...s, questions: s.questions.map(q => q.id === questionId ? { ...q, answer } : q) }
+                : s
+        ));
     };
 
-    const currentSectionIndex = Sections.findIndex(section => 
-        section.id === sectionId
-    );
-    const nextSectionId = Sections[currentSectionIndex + 1]?.id || null;
-    const prevSectionId = Sections[currentSectionIndex - 1]?.id || null;
+    const completeSection = () => {
+        setSections(prev => prev.map((s, i) =>
+            i === currentSectionIndex ? { ...s, completed: true } : s
+        ));
+        if (currentSectionIndex < Sections.length - 1) {
+            setCurrentSectionIndex(prev => prev + 1);
+        }
+    };
+
+    const goToPrevSection = () => {
+        if (currentSectionIndex > 0) {
+            setCurrentSectionIndex(prev => prev - 1);
+        }
+    };
+
     return (
         <QuestionContext.Provider value={{
-            questions,
-            sectionId,
+            projectId,
+            sections,
             currentSectionIndex,
-            nextSectionId,
-            prevSectionId,
+            currentSection,
             addQuestions,
-            updateAnswer
-        }}
-        >
+            updateAnswer,
+            completeSection,
+            goToPrevSection,
+        }}>
             {children}
         </QuestionContext.Provider>
     );
