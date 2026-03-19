@@ -1,5 +1,7 @@
 export const Sections = [
-    { id: "base-questions", title: "Base Questions" },
-    { id: "second-questions", title: "Second Questions" },
-    { id: "third-questions", title: "Third Questions" },
-  ];
+    { id: "business-info", title: "מידע על העסק" },
+    { id: "competition", title: "תחרות ושוק" },
+    { id: "existing-identity", title: "זהות ויזואלית קיימת" },
+    { id: "design-preferences", title: "העדפות עיצוביות" },
+    { id: "target-audience", title: "קהל יעד ומסר" },
+];
