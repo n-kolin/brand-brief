@@ -40,13 +40,28 @@ Generate unique IDs using timestamp: "ai_q_${Date.now()}_1", "ai_q_${Date.now()}
 Return ONLY valid JSON, no markdown, no extra text.`;
 }
 
-export function buildImagePrompt(allAnswers: Record<string, QuestionType[]>): string {
+export function buildLogoPromptGeneratorPrompt(allAnswers: Record<string, QuestionType[]>): string {
     const answersContext = Object.entries(allAnswers).map(([section, questions]) => {
         const sectionAnswers = buildQandAPrompt(questions);
         return `Section: ${section}\n${sectionAnswers}`;
     }).join('\n\n');
 
-    return `Create a professional and visually appealing logo for a brand based on the following information gathered from a questionnaire:\n\n${answersContext}\n\nThe logo should reflect the brand's identity and values.`;
+    return `You are an expert logo designer and AI image prompt engineer.
+Based on the following brand brief answers, write a detailed, specific image generation prompt for creating a professional logo.
+
+Brand Brief:
+${answersContext}
+
+Write a prompt for an image generation model that will create a high-quality logo.
+The prompt should include:
+- Style (minimalist, modern, classic, etc.)
+- Color palette (specific colors based on preferences)
+- Visual elements and symbols
+- Typography style if relevant
+- Overall mood and feel
+- Technical specs: "vector style, clean background, professional logo design, high quality"
+
+Return ONLY the image generation prompt text, nothing else. No explanations, no JSON, just the prompt.`;
 }
 
 export function buildSummaryPrompt(allAnswers: QuestionType[]): string {
