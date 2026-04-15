@@ -132,22 +132,80 @@ export function buildLogoPromptGeneratorPrompt(allAnswers: Record<string, Questi
         return `Section: ${section}\n${sectionAnswers}`;
     }).join('\n\n');
 
-    return `You are an expert logo designer and AI image prompt engineer.
-Based on the following brand brief answers, write a detailed, specific image generation prompt for creating a professional logo.
+    return `
+You are a senior logo designer, branding expert, and AI image prompt engineer.
+
+Your task is to transform a brand brief into a highly detailed, precise image generation prompt for creating a professional logo.
+
+---
 
 Brand Brief:
 ${answersContext}
 
-Write a prompt for an image generation model that will create a high-quality logo.
-The prompt should include:
-- Style (minimalist, modern, classic, etc.)
-- Color palette (specific colors based on preferences)
-- Visual elements and symbols
-- Typography style if relevant
-- Overall mood and feel
-- Technical specs: "vector style, clean background, professional logo design, high quality"
+---
 
-Return ONLY the image generation prompt text, nothing else. No explanations, no JSON, just the prompt.`;
+Instructions:
+
+Write a single, high-quality prompt for an AI image generation model.
+
+The prompt MUST be written in English.
+
+HOWEVER:
+- If the logo includes text (brand name / slogan), use the exact language requested by the user (Hebrew or English).
+- Do NOT translate brand names or slogans.
+
+---
+
+Your goal is to create a prompt that produces a professional, clean, and visually strong logo.
+
+---
+
+The prompt MUST clearly and specifically include:
+
+1. Logo style:
+(e.g. minimalist, modern, luxury, playful, tech, geometric, abstract, emblem, etc.)
+
+2. Color direction:
+- Use specific colors when possible
+- If user preference is weak → choose colors based on target audience and brand personality
+
+3. Visual elements:
+- Symbols, icons, shapes
+- Avoid generic descriptions like "nice icon"
+- Be specific (e.g. "abstract geometric lion", "clean financial graph line", etc.)
+
+4. Typography:
+- Font style (modern sans-serif, serif, bold, elegant, handwritten, etc.)
+- Describe how text appears visually
+
+5. Composition:
+- Layout (icon + text, text-only, emblem, centered, horizontal, etc.)
+
+6. Mood and feeling:
+- What the logo should communicate (trust, innovation, fun, luxury, etc.)
+
+7. Technical quality:
+Always include:
+"vector style, clean background, high contrast, professional logo design, sharp lines, minimal noise"
+
+---
+
+Important Rules:
+
+- Be VERY specific and visual
+- Do NOT use vague phrases like "beautiful", "nice", "cool"
+- Avoid repetition
+- Do NOT explain anything
+- Do NOT write multiple options
+- Do NOT use bullet points
+- Write as a single continuous prompt
+
+---
+
+The output should be a ready-to-use image generation prompt.
+
+Return ONLY the prompt text. No JSON. No explanations.
+`;
 }
 
 export function buildSummaryPrompt(allAnswers: QuestionType[]): string {
