@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Failed to generate image prompt" }, { status: 500 });
         }
 
+        console.log("Generated image prompt:", imagePrompt);
+
         const imageResponse = await ai.models.generateContent({
             model: "gemini-3.1-flash-image-preview",
             contents: imagePrompt,
@@ -37,6 +39,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "No image generated" }, { status: 500 });
         }
 
+        console.log("Generated image data:", imagePart.inlineData);
+        
         return NextResponse.json({
             success: true,
             imageData: imagePart.inlineData.data,

@@ -28,6 +28,32 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ success: true, project: data });
 }
 
+export async function PATCH(request: NextRequest) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { projectId, logoUrl, logoPrompt } = await request.json();
+  if (!projectId || !logoUrl) {
+    return NextResponse.json({ success: false, error: 'Missing fields' }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from('projects')
+    .update({ logo_url: logoUrl, logo_prompt: logoPrompt, logo_created_at: new Date().toISOString(), status: 'completed' })
+    .eq('id', projectId)
+    .eq('user_id', user.id);
+
+  if (error) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 export async function POST() {
   const supabase = await createClient();
 
