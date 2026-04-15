@@ -1,6 +1,7 @@
 'use client'
 import { AnswerType } from '@/app/types/question.type';
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import HistoryQuestionCard from '../components/HistoryQuestionCard';
 import QuestionCard from '../components/QuestionCard';
 import { Sections } from '@/app/config/sections.config';
@@ -11,6 +12,7 @@ const MAX_AI_GENERATION_ROUNDS = 3;
 
 export default function BrandBriefPage() {
     const { projectId, sections, currentSectionIndex, currentSection, addQuestions, updateAnswer, completeSection, goToPrevSection } = useQuestions();
+    const router = useRouter();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiStopped, setAiStopped] = useState(false);
@@ -36,7 +38,7 @@ export default function BrandBriefPage() {
                 return;
             }
 
-            if (data.questions?.questions?.length > 0) {
+            if (data.questions?.questions?.length && data.questions?.questions?.length > 0) {
                 addQuestions(data.questions.questions);
                 generationRoundsRef.current += 1;
             }
@@ -75,6 +77,11 @@ export default function BrandBriefPage() {
         setAiStopped(false);
         generationRoundsRef.current = 0;
         completeSection();
+
+        const isLast = currentSectionIndex === Sections.length - 1;
+        if (isLast) {
+            router.push(`/logo/${projectId}`);
+        }
     };
 
     const handlePrevSection = () => {

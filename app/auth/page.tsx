@@ -23,8 +23,6 @@ export default function AuthPage() {
 
     if (error) {
       setMessage({ text: error.message, type: 'error' });
-    } else if (!isLogin) {
-      setMessage({ text: 'Check your email to confirm your account!', type: 'success' });
     } else {
       window.location.href = '/';
     }
