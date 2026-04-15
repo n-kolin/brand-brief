@@ -1,31 +1,111 @@
 import { QuestionType } from "@/app/types/question.type";
 
 
-export function buildQuestionsPrompt(sectionTitle: string, answeredQuestions: QuestionType[]): string {
-    const questionsContext = answeredQuestions.map(q =>
-        `Q: ${q.question}\nA: ${q.answer || q.defaultAnswer || 'N/A'}`
-    ).join('\n\n');
-    
-    return `You are an AI assistant that generates questions for a brand brief questionnaire.
-Given the section "${sectionTitle}", analyze the conversation so far and decide if more questions are needed.
+export function buildQuestionsPrompt(
+  sectionTitle: string,
+  answeredQuestions: QuestionType[]
+): string {
+
+  const questionsContext = answeredQuestions.map(q =>
+    `Q: ${q.question}\nA: ${q.answer || q.defaultAnswer || 'N/A'}`
+  ).join('\n\n');
+
+  return `
+You are a professional branding strategist and logo designer.
+
+Your task is to generate smart follow-up questions for a brand brief questionnaire.
+
+The goal is to collect enough high-quality information to create a professional logo — not just to keep asking questions.
+
+Current Section: "${sectionTitle}"
+
+All Sections in the questionnaire:
+- Business Identity
+- Target Audience
+- Brand Personality & Values
+- Visual Style & Preferences
+- Competitors & Differentiation
 
 Previous Q&A pairs:
 ${questionsContext}
 
-If you think we have enough information for this section, return:
+---
+
+Instructions:
+
+Analyze the previous answers and decide:
+
+1. Do we have enough information to make strong design decisions for THIS section?
+2. If not — what critical information is missing specifically for this section?
+
+---
+
+Important Rules:
+
+- ONLY ask questions relevant to the CURRENT section
+- Do NOT ask questions that belong to other sections
+- If a missing detail belongs to another section → DO NOT ask it here
+
+- Do NOT ask questions just to continue the conversation
+- Avoid repeating or rephrasing existing questions
+- Avoid low-value or generic questions (like "anything else?")
+
+- Focus on questions that improve:
+  - Target audience understanding
+  - Brand personality
+  - Emotional tone
+  - Business positioning
+  - Visual direction
+
+- If the user already gave detailed and sufficient answers → STOP
+
+- If answers are vague → prefer structured question types (RADIO, CHECKBOX, DROPDOWN)
+
+---
+
+Question Types:
+
+You can use the following types:
+
+- TEXT → for open answers
+- RADIO → single choice (use when options are clear and limited)
+- CHECKBOX → multiple choices
+- DROPDOWN → structured selection
+- NUMBER → numeric input
+- DATE → date input
+
+---
+
+When using RADIO / CHECKBOX / DROPDOWN:
+
+You MUST include an "options" array like this:
+
+"options": [
+  { "key": "option_1", "value": "Option 1" },
+  { "key": "option_2", "value": "Option 2" }
+]
+
+---
+
+Output Rules:
+
+If enough information exists, return:
+
 {
   "shouldContinue": false,
-  "reason": "Brief explanation why no more questions needed",
+  "reason": "Explain briefly why no more questions are needed",
   "questions": []
 }
 
-If more questions would be helpful (maximum 3), return:
+---
+
+If more information is needed (2 to 5 questions), return:
+
 {
   "shouldContinue": true,
   "questions": [
     {
       "type": "TEXT",
-      "id": "ai_q_${Date.now()}_1",
       "question": "Your question here?",
       "answer": "",
       "defaultAnswer": ""
@@ -33,11 +113,17 @@ If more questions would be helpful (maximum 3), return:
   ]
 }
 
-Valid question types: TEXT, RADIO, CHECKBOX, DROPDOWN, NUMBER, DATE
-For RADIO, CHECKBOX, DROPDOWN - include "options" array with key and value.
-Generate unique IDs using timestamp: "ai_q_${Date.now()}_1", "ai_q_${Date.now()}_2", etc.
+---
 
-Return ONLY valid JSON, no markdown, no extra text.`;
+Final Instructions:
+
+- Generate between 2 to 5 questions (no less, no more) if continuing
+- Do NOT generate IDs (they will be added later by the system)
+- Keep questions clear and simple (user is not a designer)
+- Prefer quality over quantity
+
+Return ONLY valid JSON. No markdown, no explanations.
+`;
 }
 
 export function buildLogoPromptGeneratorPrompt(allAnswers: Record<string, QuestionType[]>): string {
