@@ -3,12 +3,18 @@ import { QuestionType } from "@/app/types/question.type";
 
 export function buildQuestionsPrompt(
   sectionTitle: string,
-  answeredQuestions: QuestionType[]
+  answeredQuestions: QuestionType[],
+  pendingQuestions: QuestionType[] = []
 ): string {
 
   const questionsContext = answeredQuestions.map(q =>
     `Q: ${q.question}\nA: ${q.answer || q.defaultAnswer || 'N/A'}`
   ).join('\n\n');
+
+  const pendingContext = pendingQuestions.length > 0
+    ? `\nQuestions already queued (DO NOT repeat or rephrase these):\n` +
+      pendingQuestions.map(q => `- ${q.question}`).join('\n')
+    : '';
 
   return `
 You are a professional branding strategist and logo designer.
@@ -28,6 +34,7 @@ All Sections in the questionnaire:
 
 Previous Q&A pairs:
 ${questionsContext}
+${pendingContext}
 
 ---
 
@@ -42,9 +49,10 @@ Analyze the previous answers and decide:
 
 Important Rules:
 
+- You are STRICTLY limited to the CURRENT section: "${sectionTitle}"
+- The questionnaire has other sections that will cover other topics — do NOT ask about them here
+- Each section is handled separately — stay focused ONLY on what belongs to THIS section
 - ONLY ask questions relevant to the CURRENT section
-- Do NOT ask questions that belong to other sections
-- If a missing detail belongs to another section → DO NOT ask it here
 
 - Do NOT ask questions just to continue the conversation
 - Avoid repeating or rephrasing existing questions

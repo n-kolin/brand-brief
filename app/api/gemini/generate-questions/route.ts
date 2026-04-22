@@ -8,9 +8,10 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 export async function POST(request: NextRequest){
     try{
         const body = await request.json();
-        const { sectionTitle, answeredQuestions } = body as {
+        const { sectionTitle, answeredQuestions, pendingQuestions } = body as {
             sectionTitle: string;
             answeredQuestions: QuestionType[];
+            pendingQuestions?: QuestionType[];
         };
         
         if (!sectionTitle || !answeredQuestions) {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest){
             }, { status: 400 });
         }
         
-        const prompt = buildQuestionsPrompt(sectionTitle, answeredQuestions);
+        const prompt = buildQuestionsPrompt(sectionTitle, answeredQuestions, pendingQuestions ?? []);
         
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",

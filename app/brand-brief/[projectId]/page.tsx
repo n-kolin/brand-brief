@@ -29,7 +29,8 @@ export default function BrandBriefPage() {
 
         try {
             const answeredQuestions = questions.filter(q => q.answer);
-            const data = await generateQuestions(currentSection.title, answeredQuestions);
+            const pendingQuestions = questions.filter(q => !q.answer);
+            const data = await generateQuestions(currentSection.title, answeredQuestions, pendingQuestions);
 
             if (!data.success) return;
 
