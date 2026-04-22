@@ -29,7 +29,7 @@ export default function BrandBriefPage() {
 
         try {
             const answeredQuestions = questions.filter(q => q.answer);
-            const pendingQuestions = questions.filter(q => !q.answer);
+            const pendingQuestions = questions.filter(q => !q.answer && !q.isClosingQuestion);
             const data = await generateQuestions(currentSection.title, answeredQuestions, pendingQuestions);
 
             if (!data.success) return;
@@ -59,7 +59,10 @@ export default function BrandBriefPage() {
         if (!isLastQuestion) {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
-            await handleSectionComplete();
+            const updatedQuestions = questions.map((q, i) =>
+                i === currentQuestionIndex ? { ...q, answer } : q
+            );
+            await handleSectionComplete(updatedQuestions);
         }
 
         const questionsLeft = questions.length - currentQuestionIndex - 1;
@@ -68,9 +71,9 @@ export default function BrandBriefPage() {
         }
     };
 
-    const handleSectionComplete = async () => {
+    const handleSectionComplete = async (updatedQuestions = questions) => {
         try {
-            await saveSection(projectId, currentSection.sectionId, currentSection.title, questions);
+            await saveSection(projectId, currentSection.sectionId, currentSection.title, updatedQuestions);
         } catch (error) {
             console.error('Failed to save section:', error);
         }
@@ -135,7 +138,7 @@ export default function BrandBriefPage() {
             <div>
                 <button onClick={handlePrevSection} disabled={currentSectionIndex === 0}>Previous</button>
                 {isLastQuestion && isLastSection && (
-                    <button onClick={handleSectionComplete}>Finish</button>
+                    <button onClick={() => handleSectionComplete()}>Finish</button>
                 )}
             </div>
         </div>

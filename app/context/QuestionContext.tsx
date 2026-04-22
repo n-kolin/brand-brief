@@ -61,11 +61,16 @@ export const QuestionProvider: FC<QuestionProviderProps> = ({ children, projectI
     const currentSection = sections[currentSectionIndex];
 
     const addQuestions = (newQuestions: QuestionType[]) => {
-        setSections(prev => prev.map((s, i) =>
-            i === currentSectionIndex
-                ? { ...s, questions: [...s.questions, ...newQuestions] }
-                : s
-        ));
+        setSections(prev => prev.map((s, i) => {
+            if (i !== currentSectionIndex) return s;
+            const closingIndex = s.questions.findIndex(q => q.isClosingQuestion);
+            if (closingIndex === -1) {
+                return { ...s, questions: [...s.questions, ...newQuestions] };
+            }
+            const before = s.questions.slice(0, closingIndex);
+            const closing = s.questions.slice(closingIndex);
+            return { ...s, questions: [...before, ...newQuestions, ...closing] };
+        }));
     };
 
     const updateAnswer = (questionId: string, answer: AnswerType) => {
