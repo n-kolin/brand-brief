@@ -12,7 +12,8 @@ export interface GenerateQuestionsResponse {
 
 export async function generateQuestions(
   sectionTitle: string,
-  answeredQuestions: QuestionType[]
+  answeredQuestions: QuestionType[],
+  pendingQuestions: QuestionType[] = []
 ): Promise<GenerateQuestionsResponse> {
   try {
     const response = await fetch(API_ENDPOINTS.GENERATE_QUESTIONS, {
@@ -20,7 +21,8 @@ export async function generateQuestions(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sectionTitle,
-        answeredQuestions
+        answeredQuestions,
+        pendingQuestions
       })
     });
 

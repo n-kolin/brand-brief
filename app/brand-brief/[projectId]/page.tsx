@@ -1,6 +1,6 @@
 'use client'
 import { AnswerType } from '@/app/types/question.type';
-import React, { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import HistoryQuestionCard from '../components/HistoryQuestionCard';
 import QuestionCard from '../components/QuestionCard';
@@ -8,45 +8,68 @@ import { Sections } from '@/app/config/sections.config';
 import { useQuestions } from '@/app/context/QuestionContext';
 import { generateQuestions, saveSection } from '@/app/lib/api';
 
-const MAX_AI_GENERATION_ROUNDS = 3;
+const MAX_AI_ROUNDS = 3;
+
+type AIStatus = 'idle' | 'fetching' | 'done';
 
 export default function BrandBriefPage() {
     const { projectId, sections, currentSectionIndex, currentSection, addQuestions, updateAnswer, completeSection, goToPrevSection } = useQuestions();
     const router = useRouter();
+
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [aiStopped, setAiStopped] = useState(false);
-    const isGeneratingRef = useRef(false);
-    const generationRoundsRef = useRef(0);
+    const [aiStatus, setAiStatus] = useState<AIStatus>('idle');
+
+    // ref שמתעדכן בכל render - תמיד מחזיק את הערך הנוכחי גם בתוך closures
+    const aiStatusRef = useRef<AIStatus>('idle');
+    aiStatusRef.current = aiStatus;
+
+    const roundsRef = useRef(0);
+    const activeSectionIdRef = useRef(currentSection.sectionId);
+    activeSectionIdRef.current = currentSection.sectionId;
 
     const questions = currentSection.questions;
 
-    const tryGenerateMoreQuestions = async () => {
-        if (isGeneratingRef.current || generationRoundsRef.current >= MAX_AI_GENERATION_ROUNDS || aiStopped) return;
+    // ה-closing question מוצגת רק כשה-AI סיים לגמרי
+    const canProceed = aiStatus === 'done';
 
-        isGeneratingRef.current = true;
-        setIsGenerating(true);
+    const tryGenerateMoreQuestions = async () => {
+        // בודק aiStatusRef.current ולא aiStatus - כדי לקבל את הערך הנוכחי ולא מה-closure
+        if (aiStatusRef.current === 'fetching' || aiStatusRef.current === 'done' || roundsRef.current >= MAX_AI_ROUNDS) return;
+
+        const sectionIdAtStart = currentSection.sectionId;
+        setAiStatus('fetching');
 
         try {
             const answeredQuestions = questions.filter(q => q.answer);
-            const data = await generateQuestions(currentSection.title, answeredQuestions);
+            const pendingQuestions = questions.filter(q => !q.answer && !q.isClosingQuestion);
+            const data = await generateQuestions(currentSection.title, answeredQuestions, pendingQuestions);
 
-            if (!data.success) return;
+            // section השתנה בזמן הקריאה - מתעלמים
+            if (activeSectionIdRef.current !== sectionIdAtStart) return;
 
-            if (data.questions?.shouldContinue === false) {
-                setAiStopped(true);
+            if (!data.success) {
+                setAiStatus('done');
                 return;
             }
 
-            if (data.questions?.questions?.length && data.questions?.questions?.length > 0) {
+            if (data.questions?.shouldContinue === false) {
+                setAiStatus('done');
+                return;
+            }
+
+            if (data.questions?.questions?.length && data.questions.questions.length > 0) {
                 addQuestions(data.questions.questions);
-                generationRoundsRef.current += 1;
+                roundsRef.current += 1;
+            }
+
+            if (roundsRef.current >= MAX_AI_ROUNDS) {
+                setAiStatus('done');
+            } else {
+                setAiStatus('idle');
             }
         } catch (error) {
             console.error('Failed to generate questions:', error);
-        } finally {
-            setIsGenerating(false);
-            isGeneratingRef.current = false;
+            setAiStatus('done');
         }
     };
 
@@ -58,24 +81,34 @@ export default function BrandBriefPage() {
         if (!isLastQuestion) {
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
-            await handleSectionComplete();
+            const updatedQuestions = questions.map((q, i) =>
+                i === currentQuestionIndex ? { ...q, answer } : q
+            );
+            await handleSectionComplete(updatedQuestions);
+            return;
         }
 
         const questionsLeft = questions.length - currentQuestionIndex - 1;
-        if (questionsLeft <= 2) {
+        if (questionsLeft <= 3) {
+            tryGenerateMoreQuestions();
+        }
+
+        // אם הגענו לשאלה לפני ה-closing ו-AI עדיין idle - מפעילים אותו
+        const nextQuestion = questions[currentQuestionIndex + 1];
+        if (nextQuestion?.isClosingQuestion && aiStatusRef.current === 'idle') {
             tryGenerateMoreQuestions();
         }
     };
 
-    const handleSectionComplete = async () => {
+    const handleSectionComplete = async (updatedQuestions = questions) => {
         try {
-            await saveSection(projectId, currentSection.sectionId, currentSection.title, questions);
+            await saveSection(projectId, currentSection.sectionId, currentSection.title, updatedQuestions);
         } catch (error) {
             console.error('Failed to save section:', error);
         }
         setCurrentQuestionIndex(0);
-        setAiStopped(false);
-        generationRoundsRef.current = 0;
+        setAiStatus('idle');
+        roundsRef.current = 0;
         completeSection();
 
         const isLast = currentSectionIndex === Sections.length - 1;
@@ -86,8 +119,8 @@ export default function BrandBriefPage() {
 
     const handlePrevSection = () => {
         setCurrentQuestionIndex(0);
-        setAiStopped(false);
-        generationRoundsRef.current = 0;
+        setAiStatus('idle');
+        roundsRef.current = 0;
         goToPrevSection();
     };
 
@@ -105,6 +138,16 @@ export default function BrandBriefPage() {
 
     const isLastSection = currentSectionIndex === Sections.length - 1;
     const isLastQuestion = currentQuestionIndex >= questions.length - 1;
+    const currentQuestion = questions[currentQuestionIndex];
+
+    // מפעיל AI כשמגיעים ל-closing question - בודק aiStatusRef.current לערך עדכני
+    useEffect(() => {
+        if (currentQuestion?.isClosingQuestion && aiStatusRef.current === 'idle') {
+            tryGenerateMoreQuestions();
+        }
+    }, [currentQuestion?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const isWaitingForAI = currentQuestion?.isClosingQuestion && !canProceed;
 
     return (
         <div>
@@ -118,23 +161,27 @@ export default function BrandBriefPage() {
 
             <h1>{currentSection.title}</h1>
 
-            {isGenerating && <div>Generating more questions...</div>}
+            {aiStatus === 'fetching' && <div>מכין שאלות נוספות...</div>}
 
             <div>
                 {questions.slice(0, currentQuestionIndex).map(q => (
                     <HistoryQuestionCard key={q.id} question={q} />
                 ))}
-                <QuestionCard
-                    question={questions[currentQuestionIndex]}
-                    initialValue={getInitialValue()}
-                    onAnswer={handleAnswer}
-                />
+                {isWaitingForAI ? (
+                    <div>ממתין לשאלות נוספות לפני הסיום...</div>
+                ) : (
+                    <QuestionCard
+                        question={currentQuestion}
+                        initialValue={getInitialValue()}
+                        onAnswer={handleAnswer}
+                    />
+                )}
             </div>
 
             <div>
                 <button onClick={handlePrevSection} disabled={currentSectionIndex === 0}>Previous</button>
-                {isLastQuestion && isLastSection && (
-                    <button onClick={handleSectionComplete}>Finish</button>
+                {isLastQuestion && isLastSection && canProceed && (
+                    <button onClick={() => handleSectionComplete()}>Finish</button>
                 )}
             </div>
         </div>

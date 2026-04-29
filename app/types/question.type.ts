@@ -18,6 +18,7 @@ export type QuestionType = {
     answer?: AnswerType;
     defaultAnswer?: string | number | Date;
     options?: { key: string, value: string, description?: string, default?: boolean }[];
+    isClosingQuestion?: boolean;
 }
 
 export type QuestionnaireType = {
