@@ -17,7 +17,6 @@ export default function LogoPage() {
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [logoPrompt, setLogoPrompt] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -39,7 +38,6 @@ export default function LogoPage() {
       if (data) {
         setProject(data as ProjectData);
         if (data.logo_url) setLogoUrl(data.logo_url);
-        if (data.logo_prompt) setLogoPrompt(data.logo_prompt);
       }
     }
     load();
@@ -72,12 +70,23 @@ export default function LogoPage() {
 
       await saveLogoToProject(projectId, uploadResult.logoUrl, result.imagePrompt || '');
       setLogoUrl(uploadResult.logoUrl);
-      setLogoPrompt(result.imagePrompt || null);
     } catch (e) {
       setError('משהו השתבש, נסה שוב');
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleDownload = async () => {
+    if (!logoUrl) return;
+    const response = await fetch(logoUrl);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'logo.png';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -87,8 +96,11 @@ export default function LogoPage() {
       {logoUrl ? (
         <div>
           <img src={logoUrl} alt="לוגו" style={{ maxWidth: '100%', borderRadius: 12, marginBottom: 24 }} />
-          <button onClick={handleGenerate} disabled={isGenerating} style={{ marginTop: 16 }}>
-            {isGenerating ? 'מייצר...' : 'צור לוגו חדש'}
+          <button
+            onClick={handleDownload}
+            style={{ display: 'inline-block', marginTop: 16, padding: '10px 24px', background: '#000', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+          >
+            הורד לוגו
           </button>
         </div>
       ) : (
