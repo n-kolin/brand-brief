@@ -35,7 +35,21 @@ export function buildLogoUserPrompt(allAnswers: Record<string, QuestionType[]>):
 }
 
 export function buildQandAPrompt(allAnswers: QuestionType[]): string {
-    return allAnswers.map(q =>
-        `Q: ${q.question}\nA: ${q.answer || q.defaultAnswer || 'N/A'}`
-    ).join('\n\n');
+    return allAnswers.map(q => {
+        let answerText = q.answer || q.defaultAnswer || 'N/A';
+
+        if (q.options && q.answer) {
+            if (Array.isArray(q.answer)) {
+                const labels = (q.answer as string[])
+                    .map(key => q.options!.find(o => o.key === key)?.value || key)
+                    .join(', ');
+                answerText = labels;
+            } else {
+                const option = q.options.find(o => o.key === q.answer);
+                if (option) answerText = option.value;
+            }
+        }
+
+        return `Q: ${q.question}\nA: ${answerText}`;
+    }).join('\n\n');
 }

@@ -70,11 +70,17 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        const timestamp = Date.now();
+        const questionsWithIds = (questionsData.questions || []).map((q: QuestionType, i: number) => ({
+            ...q,
+            id: q.id || `ai_q_${timestamp}_${i}_${Math.random().toString(36).slice(2, 7)}`,
+        }));
+
         return NextResponse.json({
             success: true,
             questions: {
                 shouldContinue: true,
-                questions: questionsData.questions || []
+                questions: questionsWithIds
             }
         });
 
