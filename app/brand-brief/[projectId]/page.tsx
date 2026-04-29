@@ -13,7 +13,7 @@ const MAX_AI_ROUNDS = 3;
 type AIStatus = 'idle' | 'fetching' | 'done';
 
 export default function BrandBriefPage() {
-    const { projectId, sections, currentSectionIndex, currentSection, addQuestions, updateAnswer, completeSection, goToPrevSection } = useQuestions();
+    const { projectId, sections, currentSectionIndex, currentSection, addQuestions, updateAnswer, completeSection } = useQuestions();
     const router = useRouter();
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -118,10 +118,7 @@ export default function BrandBriefPage() {
     };
 
     const handlePrevSection = () => {
-        setCurrentQuestionIndex(0);
-        setAiStatus('idle');
-        roundsRef.current = 0;
-        goToPrevSection();
+        // disabled - no going back between sections
     };
 
     const getInitialValue = () => {
@@ -179,7 +176,6 @@ export default function BrandBriefPage() {
             </div>
 
             <div>
-                <button onClick={handlePrevSection} disabled={currentSectionIndex === 0}>Previous</button>
                 {isLastQuestion && isLastSection && canProceed && (
                     <button onClick={() => handleSectionComplete()}>Finish</button>
                 )}

@@ -19,7 +19,6 @@ interface QuestionContextType {
     addQuestions: (newQuestions: QuestionType[]) => void;
     updateAnswer: (questionId: string, answer: AnswerType) => void;
     completeSection: () => void;
-    goToPrevSection: () => void;
 }
 
 const QuestionContext = createContext<QuestionContextType | undefined>(undefined);
@@ -90,12 +89,6 @@ export const QuestionProvider: FC<QuestionProviderProps> = ({ children, projectI
         }
     };
 
-    const goToPrevSection = () => {
-        if (currentSectionIndex > 0) {
-            setCurrentSectionIndex(prev => prev - 1);
-        }
-    };
-
     return (
         <QuestionContext.Provider value={{
             projectId,
@@ -105,7 +98,6 @@ export const QuestionProvider: FC<QuestionProviderProps> = ({ children, projectI
             addQuestions,
             updateAnswer,
             completeSection,
-            goToPrevSection,
         }}>
             {children}
         </QuestionContext.Provider>
