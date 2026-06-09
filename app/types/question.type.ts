@@ -2,6 +2,7 @@ export type QuestionProps = {
     question: QuestionType;
     value: AnswerType;
     onChange: (newValue: AnswerType) => void;
+    accent?: { border: string; ring: string; bg: string; text: string; bgLight: string };
 }
 
 export type AnswerType = string | number | Date | string[];

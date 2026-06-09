@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
+/* Safelist - צבעי accent דינמיים לכל section */
+@source inline("bg-emerald-500 bg-emerald-500/20 text-emerald-400 border-emerald-500 ring-emerald-500/20");
+@source inline("bg-blue-500 bg-blue-500/20 text-blue-400 border-blue-500 ring-blue-500/20");
+@source inline("bg-purple-500 bg-purple-500/20 text-purple-400 border-purple-500 ring-purple-500/20");
+@source inline("bg-amber-500 bg-amber-500/20 text-amber-400 border-amber-500 ring-amber-500/20");
+@source inline("bg-rose-500 bg-rose-500/20 text-rose-400 border-rose-500 ring-rose-500/20");
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(0.08 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.12 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.18 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.75 0.15 145);
+  --accent-foreground: oklch(0.08 0 0);
+  --border: oklch(0.25 0 0);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  direction: rtl;
+  overflow-y: auto;
+}
+
+input, textarea {
+  text-align: right;
+  direction: rtl;
+}
+
+/* הסתרת scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

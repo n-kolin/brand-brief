@@ -12,6 +12,7 @@ async function getSystemPrompt(): Promise<string> {
         .from('prompts')
         .select('content')
         .eq('key', 'logo_prompt_generator_system_prompt')
+        .limit(1)
         .single();
 
     if (error || !data?.content) {

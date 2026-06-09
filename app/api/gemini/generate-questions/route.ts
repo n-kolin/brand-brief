@@ -12,10 +12,11 @@ async function getSystemPrompt(): Promise<string> {
         .from('prompts')
         .select('content')
         .eq('key', 'brand_question_generator_system_prompt')
+        .limit(1)
         .single();
 
     if (error || !data?.content) {
-        console.error('Failed to load system prompt from DB:', error?.message);
+        console.error('Failed to load system prompt from DB:', error?.code, error?.message, '| data:', JSON.stringify(data));
         throw new Error('System prompt not found in database');
     }
 
@@ -40,8 +41,10 @@ export async function POST(request: NextRequest) {
         }
 
         const systemPrompt = await getSystemPrompt();
+        console.log('✅ System prompt loaded from DB successfully');
         const userPrompt = buildQuestionsPrompt(sectionTitle, answeredQuestions, pendingQuestions ?? []);
 
+        console.log('🚀 Calling Gemini API...');
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             config: {
