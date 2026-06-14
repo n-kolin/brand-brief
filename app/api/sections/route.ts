@@ -15,6 +15,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
   }
 
+  // בדיקת בעלות — מוודא שה-projectId שייך למשתמש המחובר
+  const { data: project } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('id', projectId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!project) {
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
+
   const { error } = await supabase
     .from('sections')
     .upsert({

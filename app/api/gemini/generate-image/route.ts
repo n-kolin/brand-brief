@@ -25,6 +25,13 @@ async function getSystemPrompt(): Promise<string> {
 
 export async function POST(request: NextRequest) {
     try {
+        // auth check — מונע שימוש ב-Gemini API ללא אימות
+        const supabaseAuth = await createClient();
+        const { data: { user } } = await supabaseAuth.auth.getUser();
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { allAnswers } = await request.json() as {
             allAnswers: Record<string, QuestionType[]>;
         };
