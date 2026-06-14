@@ -5,7 +5,12 @@ import { createProject } from '@/app/lib/api';
 import { Sections, SECTION_ACCENT_CLASSES } from '@/app/config/sections.config';
 import { ArrowLeft } from 'lucide-react';
 
-export default function LandingPage() {
+interface LandingPageProps {
+    isLoggedIn: boolean;
+    projectId: string | null;
+}
+
+export default function LandingPage({ isLoggedIn, projectId }: LandingPageProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -13,15 +18,31 @@ export default function LandingPage() {
     const handleStart = async () => {
         setIsLoading(true);
         setError(null);
-        try {
-            const projectId = await createProject();
+
+        // לא מחובר — עבור לדף הרשמה/התחברות
+        if (!isLoggedIn) {
+            router.push('/auth');
+            return;
+        }
+
+        // מחובר + יש פרויקט — המשך מאיפה שעצרת
+        if (projectId) {
             router.push(`/${projectId}`);
+            return;
+        }
+
+        // מחובר + אין פרויקט — צור חדש
+        try {
+            const newProjectId = await createProject();
+            router.push(`/${newProjectId}`);
         } catch (err) {
             console.error('Error creating project:', err);
             setError('משהו השתבש, נסה שוב');
             setIsLoading(false);
         }
     };
+
+    const isReturningUser = isLoggedIn && !!projectId;
 
     return (
         <div className="min-h-screen bg-background">
@@ -68,11 +89,11 @@ export default function LandingPage() {
                             {isLoading ? (
                                 <>
                                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                                    <span>יוצר פרויקט...</span>
+                                    <span>טוען...</span>
                                 </>
                             ) : (
                                 <>
-                                    <span>בואו נתחיל</span>
+                                    <span>{isReturningUser ? 'המשך מאיפה שעצרת' : 'בואו נתחיל'}</span>
                                     <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
                                 </>
                             )}

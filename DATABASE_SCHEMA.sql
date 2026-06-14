@@ -3,9 +3,10 @@
 -- ============================================
 
 -- טבלת Projects (פרויקטים)
+-- הגבלה: כל משתמש מקבל פרויקט אחד בלבד (UNIQUE user_id)
 create table projects (
   id uuid primary key default uuid_generate_v4(),
-  user_id uuid references auth.users(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null unique,
   
   -- פרטי הפרויקט
   name text not null default 'Untitled Project',

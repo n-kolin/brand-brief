@@ -5,7 +5,7 @@ import { Sections, SECTION_ACCENT_CLASSES } from '@/app/config/sections.config';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

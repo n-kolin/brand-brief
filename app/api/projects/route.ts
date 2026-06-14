@@ -62,6 +62,18 @@ export async function POST() {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
+  // בדוק אם כבר קיים פרויקט למשתמש — כל משתמש מקבל פרויקט אחד בלבד
+  const { data: existing } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('user_id', user.id)
+    .limit(1)
+    .single();
+
+  if (existing) {
+    return NextResponse.json({ success: true, projectId: existing.id });
+  }
+
   const { data, error } = await supabase
     .from('projects')
     .insert({ user_id: user.id })
